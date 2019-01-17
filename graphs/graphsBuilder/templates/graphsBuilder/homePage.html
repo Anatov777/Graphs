@@ -1,57 +1,103 @@
 {% extends "graphsBuilder/wrapper.html" %}
-
 {% block content %}
 
-  <h1>Список файлов</h1>
+    <h1>Список файлов</h1>
 
-  {% for file in measurementFiles %}
-    <a href="">{{ file }}</a><br>
-  {% endfor %}
+    <div id='filesList'>
+        {% for file in measurementFiles %}
+            <a href="" id='{{ file }}' onClick='event.preventDefault();sendFileName(this.id)'>{{ file }}</a><br>
+        {% endfor %}
+    </div>
 
-<div class="ct-chart ct-perfect-fourth"></div>
+    <div class="ct-chart ct-perfect-fourth"></div>
 
 <script type="text/javascript">
-  alert(window.location.host);
+  
+    var socket_url = 'ws://' + window.location.host + '/ws/graphs/';
+    console.log(socket_url)
+
+    var socket = new WebSocket(socket_url)
+
+    socket.onmessage = function(event){
+        var measures = JSON.parse(event.data);
+        console.log(measures)
+        for (val of measures) {
+            console.log(val);
+        }
+        drawGraph();
+    }
+
+    socket.onopen = function(event){
+        console.log('socket opened', event)
+    }
+
+    socket.onclose = function(event){
+        console.log('socket closed', event)
+    }
+
 </script>
 
 <script type="text/javascript">
-  var data = {
-  labels: ['1', '2', '3', '4', '5', '6'],
-  series: [
-    {
-      data: [1, 2, 3, 5, 8, 13]
-    }
-  ]
-};
 
-var options = {
-  axisX: {
-    labelInterpolationFnc: function(value) {
-      return 'Calendar Week ' + value;
-    }
-  }
-};
+    // var filesListDiv = document.createElement('a');
+    // filesListDiv.innerHTML = 'File 1';
+    // document.querySelector('#filesList').appendChild(filesListDiv);
 
-var responsiveOptions = [
-  ['screen and (min-width: 641px) and (max-width: 1024px)', {
-    showPoint: false,
-    axisX: {
-      labelInterpolationFnc: function(value) {
-        return 'Week ' + value;
-      }
+    function sendFileName(fileName){
+        data = {
+            'fileName': fileName
+        }
+        socket.send(JSON.stringify(data));
     }
-  }],
-  ['screen and (max-width: 640px)', {
-    showLine: false,
-    axisX: {
-      labelInterpolationFnc: function(value) {
-        return 'W' + value;
-      }
-    }
-  }]
-];
 
-new Chartist.Line('.ct-chart', data, options, responsiveOptions);
 </script>
+
+
+<script type="text/javascript">
+    function drawGraph(){
+        var data = {
+          labels: ['1', '2', '3', '4', '5', '6'],
+          series: [
+            {
+              data: [1, 2, 3, 5, 8, 13]
+            }
+          ]
+        };
+
+        /* Set some base options (settings will override the default settings in Chartist.js *see default settings*). We are adding a basic label interpolation function for the xAxis labels. */
+        var options = {
+          axisX: {
+            labelInterpolationFnc: function(value) {
+              return 'Calendar Week ' + value;
+            }
+          }
+        };
+
+        /* Now we can specify multiple responsive settings that will override the base settings based on order and if the media queries match. In this example we are changing the visibility of dots and lines as well as use different label interpolations for space reasons. */
+        var responsiveOptions = [
+          ['screen and (min-width: 641px) and (max-width: 1024px)', {
+            showPoint: false,
+            axisX: {
+              labelInterpolationFnc: function(value) {
+                return 'Week ' + value;
+              }
+            }
+          }],
+          ['screen and (max-width: 640px)', {
+            showLine: false,
+            axisX: {
+              labelInterpolationFnc: function(value) {
+                return 'W' + value;
+              }
+            }
+          }]
+        ];
+
+        /* Initialize the chart with the above settings */
+        new Chartist.Line('.ct-chart', data, options, responsiveOptions);
+    };
+
+</script>
+
 
 {% endblock %}
