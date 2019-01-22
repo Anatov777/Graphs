@@ -1,21 +1,29 @@
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
-import os
-import re
+from .forms import UploadFileForm
+import os, re, glob
 
 def showFilesList(request):
     args = {}
     directory = 'files'
-    args['measurementFiles'] = os.listdir(directory)
+    os.chdir(directory)
+    args['measurementFiles'] = glob.glob("*.txt")
+    os.chdir('..')
 
-    # f = open('files/blocks_0.txt', 'r')
-    # lines = f.readlines()
-    # title = lines[0]
-    # lines = lines[1:]
-    # measurements = []
-    # for i in lines:
-    # 	if re.search(r'[0-9]+', i):
-    # 		measurements += i.split()
-    # f.close()
-    # args['measurements'] = measurements
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            handle_uploaded_file(request.FILES['file'])
+            return HttpResponseRedirect('')
+
+    else:
+        form = UploadFileForm()
+
+    args['form'] = form
 
     return render(request, 'graphsBuilder/homePage.html', args)
+
+def handle_uploaded_file(f):
+    with open('files/' + str(f) +'.txt', 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
