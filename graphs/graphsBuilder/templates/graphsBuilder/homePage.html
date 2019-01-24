@@ -17,9 +17,23 @@
     <form enctype="multipart/form-data" method="post">{% csrf_token %}
       {{ form }}
       <input type="submit" value="Отправить" onClick='addFile();'></p>
-    </form> 
+    </form>
 
-    <div class="ct-chart ct-perfect-fourth"></div>
+    <button id='btn1' type="button" class="btn btn-primary" data-toggle="modal" data-target=".bd-example-modal-lg">Large modal</button>
+
+    <div id='myModal' class="modal bd-example-modal-lg">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="ct-chart ct-perfect-fourth"></div>
+        </div>
+      </div>
+    </div>
 
 <script type="text/javascript">
     var socket_url = 'ws://' + window.location.host + '/ws/graphs/';
@@ -31,7 +45,6 @@
         if (JSON.parse(event.data)['action'] == 'delFile'){
             fileName = JSON.parse(event.data)['fileName'];
             document.getElementById(fileName).parentNode.remove();
-            // alert(document.getElementById(fileName).parentNode);
         }
         else if (JSON.parse(event.data)['action'] == 'addFile'){
             fileName = JSON.parse(event.data)['fileName'] + '.txt';
@@ -46,6 +59,7 @@
             var measures = JSON.parse(event.data);
             console.log(measures)
             drawGraph(measures);
+            measures = 0;
         }
     }
 
@@ -92,7 +106,11 @@
 
 
 <script type="text/javascript">
-    function drawGraph(measures){
+  function drawGraph(measures){
+    $(document).ready(function(){
+       $('#btn1').trigger('click');
+    });
+    $('#myModal').on('shown.bs.modal', function () {
         var xMeasures = [];
         var yMeasures = [];
 
@@ -106,7 +124,6 @@
             xMeasures.push(measures[i]);
           }
         }
-        console.log(typeof(xMeasures));
 
         var data = {
           labels: xMeasures,
@@ -117,38 +134,22 @@
           ]
         };
 
-        /* Set some base options (settings will override the default settings in Chartist.js *see default settings*). We are adding a basic label interpolation function for the xAxis labels. */
+        lastXElem = xMeasures[xMeasures.length - 1];
+
         var options = {
+
           axisX: {
             labelInterpolationFnc: function(value) {
-              return 'Calendar Week ' + value;
+              return Math.round(value * 100) / 100;
             }
           }
         };
 
-        /* Now we can specify multiple responsive settings that will override the base settings based on order and if the media queries match. In this example we are changing the visibility of dots and lines as well as use different label interpolations for space reasons. */
-        var responsiveOptions = [
-          ['screen and (min-width: 641px) and (max-width: 1024px)', {
-            showPoint: false,
-            axisX: {
-              labelInterpolationFnc: function(value) {
-                return 'Week ' + value;
-              }
-            }
-          }],
-          ['screen and (max-width: 640px)', {
-            showLine: false,
-            axisX: {
-              labelInterpolationFnc: function(value) {
-                return 'W' + value;
-              }
-            }
-          }]
-        ];
-
-        /* Initialize the chart with the above settings */
-        new Chartist.Line('.ct-chart', data, options, responsiveOptions);
-    };
+        new Chartist.Line('.ct-chart', data, options);
+        xMeasures = [];
+        yMeasures = [];
+    });
+  };
 </script>
 
 
